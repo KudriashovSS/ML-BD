@@ -1,0 +1,46 @@
+## EMR
+cd '/mnt/c/Users/Lenovo/GoodleDisk/Учёба/made/3 семестр/машинное обучение на больших данных'
+ssh -i emr.pem hadoop@ec2-3-249-21-2.eu-west-1.compute.amazonaws.com
+
+
+# Beginner
+## проброс порта
+cd '/mnt/c/Users/Lenovo/GoogleDisk/Учёба/made/3 семестр/машинное обучение на больших данных'
+ssh -i emr.pem -N -L 8009:ec2-3-249-21-2.eu-west-1.compute.amazonaws.com:50070 hadoop@ec2-3-249-21-2.eu-west-1.compute.amazonaws.com
+## Количество подпапок в /data: 1. Лежит подпапка texts
+
+#Intermediate
+cd '/mnt/c/Users/Lenovo/GoogleDisk/Учёба/made/3 семестр/машинное обучение на больших данных'
+ssh -i emr.pem hadoop@ec2-3-249-21-2.eu-west-1.compute.amazonaws.com
+
+## флаг ls
+1) hdfs dfs -ls /data/texts
+2) hdfs dfs -ls -h /data/texts
+3) actual
+
+## флаг du
+1) hdfs dfs -du /data/texts
+
+## флаги mkdir и touchz
+1) hdfs dfs -mkdir kudriashov_sergey
+2) hdfs dfs -mkdir kudriashov_sergey/my_folder
+3) Trash - корзина, куда складываются удаляемые файлы. Фактически, они перемещаются в папку .Trash внутри юзерского каталога. Чтобы удалить файлы, минуя корзину, нужно для команды rm использовать опцию -skipTrash
+4) hdfs dfs -touchz kudriashov_sergey/my_folder/my_file.mm
+5) hdfs dfs -rm kudriashov_sergey/my_folder/my_file.mm
+6) hdfs dfs -rm -r kudriashov_sergey
+
+## Флаги put, cat, tail, distscp
+1) hadoop distcp s3://texts-bucket/henry.txt kudriashov_sergey/henry.txt
+2) hdfs dfs -cat kudriashov_sergey/henry.txt
+3) hdfs dfs -tail kudriashov_sergey/henry.txt
+4) hadoop fs -cat kudriashov_sergey/henry.txt | head
+5) hdfs dfs -mkdir kudriashov_sergey/texts
+   -mv kudriashov_sergey/henry.txt kudriashov_sergey/texts/henry.txt
+
+
+#Advanced
+2) hdfs dfs -setrep -w 3 kudriashov_sergey/texts/henry.txt
+	Процесс долгий
+3) hdfs fsck kudriashov_sergey/texts/henry.txt -files -blocks -locations 
+4) hdfs fsck -blockId blk_1073744531_4889
+
