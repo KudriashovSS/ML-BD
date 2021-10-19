@@ -1,0 +1,137 @@
+
+# 1. Исполнителя с максимальным числом скробблов
+
+# In the query below it is assumed that we the number of rows is equal to the number of unique mbid
+(checked). Therefore we count that every singer/group has one row in our dataset, despite the fact
+that distinct(artist_mb,artist_lastfm) != count(*)
+
+select
+mbid,
+artist_mb,
+artist_lastfm
+from default.artists
+where scrobbles_lastfm = (select max(scrobbles_lastfm) from default.artists)
+
+# Result
+
+mbid 					artist_mb	artist_lastfm
+b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d	The Beatles	The Beatles
+
+# 2. Самый популярный тэг на ластфм
+
+SELECT genre, 
+count(*) as cnt 
+FROM default.artists
+
+LATERAL VIEW explode(split(lower(tags_lastfm), '\\W+')) t1 AS genre
+where genre != ""
+GROUP BY genre
+order by cnt desc
+limit 1;
+
+# Result
+
+genre	cnt
+rock	403006
+
+# 3. Самые популярные исполнители 10 самых популярных тегов ластфм
+
+# 3.1 Make table with 10 most popular tags lastfm
+
+create table default.most_popular_genres
+as
+select t2.genre as tag
+from
+(
+SELECT genre, 
+count(*) as cnt 
+FROM default.artists
+
+LATERAL VIEW explode(split(lower(tags_lastfm), '\\W+')) t1 AS genre
+where genre != ""
+GROUP BY genre
+order by cnt desc
+limit 10) t2;
+
+# Result
+
+# 3.2 Extract most popular singer/group for every genre defined above (10) based on scrobbles_lastfm
+
+WITH cte AS
+(
+SELECT 
+mbid,
+artist_mb,
+artist_lastfm,
+genre, 
+scrobbles_lastfm,
+ROW_NUMBER() OVER (PARTITION BY genre ORDER BY scrobbles_lastfm DESC) AS rn
+FROM default.artists
+
+LATERAL VIEW explode(split(lower(tags_lastfm), '\\W+')) t1 AS genre
+where genre in (select t2.tag from default.most_popular_genres t2) 
+)
+SELECT
+mbid,
+artist_mb,
+artist_lastfm,
+genre, 
+scrobbles_lastfm
+FROM cte
+WHERE rn = 1
+
+# Result 
+mbid					artist_mb		artist_lastfm		genre	 scrobbles_lastfm
+a74b1b7f-71a5-4011-9441-d0b5e4122711	Radiohead		Radiohead		indie	 499548797
+a74b1b7f-71a5-4011-9441-d0b5e4122711	Radiohead		Radiohead		hop	 499548797
+b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d	The Beatles		The Beatles		rock	 517126254
+cc0b7089-c08d-4c10-b6b0-873582c17fd6	System of a Down	System of a Down	hardcore 226695285
+ada7a83c-e3e1-40f1-93f9-3e73dbc9298a	Arctic Monkeys		Arctic Monkeys		punk	 332306552
+b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d	The Beatles		The Beatles		pop	 517126254
+a74b1b7f-71a5-4011-9441-d0b5e4122711	Radiohead		Radiohead		live	 499548797
+650e7db6-b795-4eb5-a702-5ea2fc46c848	Lady Gaga		Lady Gaga		female	 285469647
+a74b1b7f-71a5-4011-9441-d0b5e4122711	Radiohead		Radiohead		seen	 499548797
+9c9f1380-2516-4fc9-a3e6-f9f61941d090	Muse			Muse			metal	 344838631
+
+4. Repeat the above task but based on listeners_lastfm stats (no fantasy =)=)=) )
+
+Extract most popular singer/group for every genre defined above (10) based on listeners_lastfm
+
+WITH cte AS
+(
+SELECT 
+mbid,
+artist_mb,
+artist_lastfm,
+genre, 
+listeners_lastfm
+ROW_NUMBER() OVER (PARTITION BY genre ORDER BY listeners_lastfm DESC) AS rn
+FROM default.artists
+
+LATERAL VIEW explode(split(lower(tags_lastfm), '\\W+')) t1 AS genre
+where genre in (select t2.tag from default.most_popular_genres t2) 
+)
+SELECT
+mbid,
+artist_mb,
+artist_lastfm,
+genre, 
+listeners_lastfm
+FROM cte
+WHERE rn = 1
+
+# Result
+
+mbid					artist_mb		artist_lastfm		genre	 listeners_lastfm
+cc197bad-dc9c-440d-a5b5-d52ba2e14234	Coldplay		Coldplay		indie	 5381567
+a74b1b7f-71a5-4011-9441-d0b5e4122711	Radiohead		Radiohead		hop	 4732528
+cc197bad-dc9c-440d-a5b5-d52ba2e14234	Coldplay		Coldplay		rock	 5381567
+b95ce3ff-3d05-4e87-9e01-c97b66af13d4	Eminem			Eminem			hardcore 4517997
+8bfac288-ccc5-448d-9573-c33ea2aa5c30	Red Hot Chili Peppers	Red Hot Chili Peppers	punk	 4620835
+cc197bad-dc9c-440d-a5b5-d52ba2e14234	Coldplay		Coldplay		pop	 5381567
+cc197bad-dc9c-440d-a5b5-d52ba2e14234	Coldplay		Coldplay		live	 5381567
+73e5e69d-3554-40d8-8516-00cb38737a1c	Rihanna			Rihanna			female	 4558193
+cc197bad-dc9c-440d-a5b5-d52ba2e14234	Coldplay		Coldplay		seen	 5381567
+8bfac288-ccc5-448d-9573-c33ea2aa5c30	Red Hot Chili Peppers	Red Hot Chili Peppers	metal	 4620835
+
+# The result is not the same as for scrobbles_lastfm, that is a suprise=).
