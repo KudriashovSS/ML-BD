@@ -1,0 +1,72 @@
+package myfirstPackage
+
+import breeze.linalg._
+
+import breeze.stats.distributions._
+import breeze.stats.DescriptiveStats._
+import scala.collection.mutable.ArrayBuffer
+import java.io.File
+
+//  Пример регрессии на питоне https://medium.com/analytics-vidhya/simple-linear-regression-with-example-using-numpy-e7b984f0d15e
+// Датасет https://www.kaggle.com/marcospessotto/happiness-and-alcohol-consumption
+
+object Main {
+  def main(args: Array[String]): Unit = {
+
+    // read csv
+    val numFeatures = 3
+    val trainDataFileName:String = args(0)
+    val valDataFileName:String = args(1)
+    val predictDataFileName:String = args(2)
+
+    val trainDataset = csvread(new File(trainDataFileName))
+    val trainLen = trainDataset.rows
+
+    val xTrain = trainDataset(::, 1 to 3)
+    val yTrain = trainDataset(::, 0)
+
+    // ************ train **************
+    val lr = 0.00001
+    val iterationCount = 100
+    //gradient descend algorithm
+    val xTrainMatrix = DenseMatrix.horzcat(xTrain, DenseMatrix.ones[Double](xTrain.rows, 1))
+    val yTrainMatrix = DenseMatrix(yTrain).t
+
+    var theta = DenseMatrix.zeros[Double](4,1)
+    var theta_tmp = DenseMatrix.zeros[Double](4,1)
+
+    for (iter <- 0 to iterationCount){
+        val error = (xTrainMatrix * theta) - yTrainMatrix
+
+        // да. тут можно сделать в одну строку без цикла.  не хватило времени  разобратья с бризом
+        for(i <- 0 to numFeatures) {
+          theta_tmp(i,0)  = theta(i,0) - lr / trainLen * sum(error.t * xTrainMatrix(::,i))
+
+          }
+
+        theta(::, 0) := theta_tmp(::, 0)
+        val mse  = sum(error.t * error)  /  trainLen
+        println( s"Train loss $mse")
+
+        }
+
+
+    // ************ predict  **************
+    val valDataset = csvread(new File(valDataFileName))
+    val valLen = valDataset.rows
+
+    val xVal = valDataset(::, 1 to 3)
+    val yVal = valDataset(::, 0)
+    val xValMatrix = DenseMatrix.horzcat(xVal, DenseMatrix.ones[Double](xVal.rows, 1))
+    val yValMatrix = DenseMatrix(yVal).t
+    val predicts = xValMatrix * theta
+    val val_error = predicts - yValMatrix
+    val val_mse = sum(val_error.t * val_error) / valLen
+
+
+    println( s"\n Validation  loss $val_mse")
+    csvwrite(new File(predictDataFileName), predicts, ',')
+
+
+  }
+}
