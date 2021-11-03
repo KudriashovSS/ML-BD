@@ -13,14 +13,12 @@ object Main {
 
     val fileName:String = args(0)
     val nothing = args(1)
-    val predictDataFileName:String = args(2)
+    val predictionsFileName:String = args(2)
 
     val df = csvread(new File(fileName))
     
     val rowsNumber = df.rows
     val columnsNumber = df.columns
-      
-    val numberfeatures = df.columns
 
     split = 0.7
       
@@ -36,39 +34,41 @@ object Main {
     val xTrainMatrix = DenseMatrix.horzcat(xTrain, DenseMatrix.ones[Double](xTrain.rows, 1))
     val yTrainMatrix = DenseMatrix(yTrain).t
 
-    var beta = DenseMatrix.zeros[Double](numberfeatures+1,1)
-    var beta_tmp = DenseMatrix.zeros[Double](numberfeatures+1,1)
+    var beta = DenseMatrix.zeros[Double](columnsNumber+1,1)
 
-    val train_error = 0
-    val valid_error = 0
-    val mse = 0
+    val trainError = DenseMatrix.zeros[Double](xTrain.rows,1)
+      
+    val trainMSE = 0
       
     for (iter <- 0 to numberOfIterations){
-        train_error = (xTrainMatrix * beta) - yTrainMatrix
+        trainError = (xTrainMatrix * beta) - yTrainMatrix
 
         for(i <- 0 to df.columns-1) {
           
-            beta(i,0)  = beta(i,0) - learningRate / rowsNumber * sum(error.t * xTrainMatrix(::,i))
+            beta(i,0)  = beta(i,0) - learningRate / rowsNumber * sum(trainError.t * xTrainMatrix(::,i))
 
           }
 
-        mse  = sum(train_error.t * train_error)  /  rowsNumber
-        println( s"Training_loss $mse")
+        trainMSE  = sum(trainError.t * trainError)  /  rowsNumber
+        println( s"Training_loss $trainMSE")
 
         }
 
-    val xValMatrix = DenseMatrix.horzcat(xVal, DenseMatrix.ones[Double](xVal.rows, 1))
-    val yValMatrix = DenseMatrix(yVal).t
+    val validError = DenseMatrix.zeros[Double](xTest.rows,1)
+    val validMSE = 0  
+      
+    val xTestMatrix = DenseMatrix.horzcat(xTest, DenseMatrix.ones[Double](xTest.rows, 1))
+    val yTestMatrix = DenseMatrix(yTest).t
     
-    val predictions = xValMatrix * beta
+    val predictions = xTestMatrix * beta
     
-    val valid_error = predictions - yValMatrix
+    val validError = predictions - yTestMatrix
     
-    val valid_mse = sum(valid_error.t * valid_error) / (rowsNumber - split*rowsNumber.toInt+1)
+    val validMSE = sum(validError.t * validError) / (rowsNumber - split*rowsNumber.toInt+1)
 
 
-    println( s"\n Validation_loss $val_mse")
-    csvwrite(new File(predictDataFileName), predicts, ',')
+    println( s"\n Validation_loss $validMSE")
+    csvwrite(new File(predictionsFileName), predictions, ',')
 
   }
 }
