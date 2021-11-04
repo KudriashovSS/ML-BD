@@ -20,11 +20,11 @@ object Main {
 
     split = 0.7
       
-    val xTrain = df(0 to split*rowsNumber.toInt, 0 to columnsNumber-1)
+    val xTrain = df(0 to split*rowsNumber.toInt,            0 to columnsNumber-1)
     val xTest  = df(split*rowsNumber.toInt+1 to rowsNumber, 0 to columnsNumber-1)               
     
-    val xTrain = df(::, 1 to columnsNumber)
-    val yTest  = df(::, 1 to columnsNumber)
+    val yTrain = df(0 to split*rowsNumber.toInt,            columnsNumber)
+    val yTest  = df(split*rowsNumber.toInt+1 to rowsNumber, columnsNumber)
     
     val learningRate = 1e-7
     val numberOfIterations = 100
@@ -41,7 +41,7 @@ object Main {
     for (iter <- 0 to numberOfIterations){
         trainError = (xTrainMatrix * beta) - yTrainMatrix
 
-        for(i <- 0 to df.columns-1) {
+        for(i <- 0 to columnsNumber) {
           
             beta(i,0)  = beta(i,0) - learningRate / rowsNumber * sum(trainError.t * xTrainMatrix(::,i))
 
