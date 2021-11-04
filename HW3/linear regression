@@ -48,7 +48,7 @@ object Main {
           }
 
         trainMSE  = sum(trainError.t * trainError)  /  rowsNumber
-        println( s"Training_loss $trainMSE")
+        println( s"Training loss $trainMSE")
 
         }
 
@@ -65,7 +65,7 @@ object Main {
     val validMSE = sum(validError.t * validError) / (rowsNumber - split*rowsNumber.toInt+1)
 
 
-    println( s"\n Validation_loss $validMSE")
+    println( s"\n Validation loss $validMSE")
     csvwrite(new File(predictionsFileName), predictions, ',')
 
   }
