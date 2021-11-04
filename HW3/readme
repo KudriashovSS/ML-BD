@@ -1,0 +1,3 @@
+1. Dataset contains file with house prices (target already logarithmized) with features as length of house, number of rooms, etc.
+2. Train and validation samples are divided using split = 0.7 (can be found in scala code)
+3. Traing loss iterations are written in ad hoc file
